@@ -38,7 +38,9 @@ fn all_fixtures_match_json_snapshots() {
         let expected_src =
             fs::read_to_string(&json_path).expect("should read .json snapshot");
 
-        let parsed = parse(&shortcut_src);
+        let parsed = parse(&shortcut_src).unwrap_or_else(|e| {
+            panic!("Failed to parse fixture {}: {e}", url_path.display())
+        });
 
         // The JSON snapshots use one of two shapes:
         //   1. { "SectionName": { "Key": "Value" } }  — sectioned file
