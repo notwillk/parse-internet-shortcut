@@ -45,3 +45,13 @@ fn returns_usage_error_without_input() {
     let mut cmd = Command::cargo_bin("parse-internet-shortcut").expect("binary exists");
     cmd.assert().code(1).stderr("error: missing input path\n");
 }
+
+#[test]
+fn returns_usage_error_for_unknown_flag() {
+    let mut cmd = Command::cargo_bin("parse-internet-shortcut").expect("binary exists");
+    let assert = cmd.arg("--unknown").assert().code(1);
+
+    let stderr = String::from_utf8_lossy(&assert.get_output().stderr);
+    assert!(stderr.starts_with("error: "));
+    assert!(stderr.contains("unexpected argument '--unknown' found"));
+}

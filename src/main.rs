@@ -6,7 +6,7 @@ use std::{
     process::ExitCode,
 };
 
-use clap::Parser;
+use clap::{Parser, error::ErrorKind};
 use parser::{ParseError, parse_shortcut};
 use thiserror::Error;
 
@@ -14,13 +14,15 @@ use thiserror::Error;
 #[command(name = "parse-internet-shortcut")]
 #[command(about = "Parse Internet Shortcut files and print JSON")]
 struct Args {
-    path: Option<String>,
+    path: String,
 }
 
 #[derive(Debug, Error)]
 enum AppError {
     #[error("missing input path")]
     MissingInput,
+    #[error("{0}")]
+    Usage(String),
     #[error("failed to read file: {path}")]
     ReadFile {
         path: String,
@@ -40,7 +42,7 @@ enum AppError {
 impl AppError {
     fn exit_code(&self) -> ExitCode {
         match self {
-            AppError::MissingInput => ExitCode::from(1),
+            AppError::MissingInput | AppError::Usage(_) => ExitCode::from(1),
             AppError::ReadFile { .. } | AppError::ReadStdin(_) => ExitCode::from(2),
             AppError::Parse(_) => ExitCode::from(3),
             AppError::Serialize(_) | AppError::WriteNewline(_) => ExitCode::from(4),
@@ -59,8 +61,8 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), AppError> {
-    let args = Args::parse();
-    let input = args.path.ok_or(AppError::MissingInput)?;
+    let args = Args::try_parse().map_err(map_clap_error)?;
+    let input = args.path;
 
     let content = if input == "-" {
         let mut buffer = String::new();
@@ -81,4 +83,18 @@ fn run() -> Result<(), AppError> {
     stdout.write_all(b"\n").map_err(AppError::WriteNewline)?;
 
     Ok(())
+}
+
+fn map_clap_error(error: clap::Error) -> AppError {
+    if error.kind() == ErrorKind::MissingRequiredArgument {
+        return AppError::MissingInput;
+    }
+
+    let raw_message = error.to_string();
+    let message = raw_message
+        .strip_prefix("error: ")
+        .unwrap_or(&raw_message)
+        .trim_end()
+        .to_owned();
+    AppError::Usage(message)
 }
