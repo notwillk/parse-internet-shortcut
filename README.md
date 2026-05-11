@@ -1,0 +1,1 @@
+# parse-internet-shortcut
