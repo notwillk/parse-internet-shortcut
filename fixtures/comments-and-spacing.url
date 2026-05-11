@@ -1,0 +1,9 @@
+; leading comment
+
+[InternetShortcut]
+URL = https://example.com/path?q=1
+# another comment
+HotKey = 1601
+
+[Metadata]
+Author = Copilot
