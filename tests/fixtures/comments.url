@@ -1,0 +1,8 @@
+; semicolon comment
+# hash comment
+
+  [ InternetShortcut ]
+  URL = https://example.com
+
+[Extra]
+Other=unknown
