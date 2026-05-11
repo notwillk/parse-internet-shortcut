@@ -12,7 +12,7 @@ fn all_fixtures_match_json_snapshots() {
 
     let mut url_files: Vec<PathBuf> = fs::read_dir(&fixtures_dir)
         .expect("fixtures/ directory should exist")
-        .filter_map(|e| e.ok())
+        .map(|e| e.expect("should read every entry in fixtures/"))
         .map(|e| e.path())
         .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("url"))
         .collect();
