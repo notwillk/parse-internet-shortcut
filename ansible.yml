@@ -1,0 +1,8 @@
+- name: Configure parse-internet-shortcut development container
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Confirm ansible scaffold is available
+      ansible.builtin.debug:
+        msg: "ansible.yml scaffold ready"

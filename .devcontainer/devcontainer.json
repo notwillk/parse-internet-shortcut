@@ -1,0 +1,15 @@
+{
+  "name": "dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/fjktkm/devcontainer-features/agent-persistence:latest": {},
+    "ghcr.io/notwillk/devcontainer-features/ansible": {}
+  },
+  "containerEnv": {
+    "DEVCONTAINER": "true",
+    "DO_NOT_TRACK": "1",
+    "REPO_PATH": "${containerWorkspaceFolder}"
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "ansible-playbook -i localhost, -c local ${containerWorkspaceFolder}/ansible.yml"
+}
