@@ -15,12 +15,44 @@ assert_eq!(map["InternetShortcut"]["URL"], "https://example.com/");
 
 ## Install (CLI)
 
-Download the latest Linux release artifacts from GitHub Releases and extract the archive for your architecture:
+This CLI is distributed through [GitHub Releases](https://github.com/notwillk/parse-internet-shortcut/releases).
 
-- `linux amd64` (`x86_64`)
-- `linux arm64`
+### From a release archive
 
-Then place `parse-internet-shortcut` on your `PATH`, for example in `/usr/local/bin`.
+Download the archive for your Linux architecture:
+
+- `parse-internet-shortcut_<version>_linux_x86_64.tar.gz`
+- `parse-internet-shortcut_<version>_linux_arm64.tar.gz`
+
+Extract the archive and install the binary onto your `PATH`:
+
+```bash
+tar -xzf parse-internet-shortcut_<version>_linux_x86_64.tar.gz
+sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
+```
+
+### From a package
+
+Each release also includes Linux packages:
+
+- `.deb` for Debian/Ubuntu
+- `.rpm` for RHEL/Fedora/openSUSE
+
+Install the package you downloaded with your system package manager, for example:
+
+```bash
+sudo dpkg -i ./parse-internet-shortcut_*.deb
+```
+
+```bash
+sudo rpm -i ./parse-internet-shortcut-*.rpm
+```
+
+Verify the installation:
+
+```bash
+parse-internet-shortcut --help
+```
 
 ## Usage (CLI)
 
@@ -82,10 +114,17 @@ Release artifacts are produced only for:
 
 ## Release process
 
-Releases are configured with GoReleaser via `.goreleaser.yml` and generate:
+Releases are configured with GoReleaser via `.goreleaser.yml` and are published by the manually dispatched `Release` GitHub Actions workflow.
+
+To cut a release:
+
+1. Create and push the Git tag you want to publish, for example `v0.1.0`.
+2. Open the repository's **Actions** tab.
+3. Run the **Release** workflow and provide that tag as the `tag` input.
+
+The workflow builds and uploads these assets to the matching GitHub Release:
 
 - tar.gz archives
 - checksums (`checksums.txt`)
 - `.deb` package
 - `.rpm` package
-
