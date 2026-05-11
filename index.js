@@ -1,5 +1,14 @@
 const { readFile } = require('node:fs/promises');
 
+function defineSafeProperty(target, key, value) {
+  Object.defineProperty(target, key, {
+    value,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
+}
+
 function parseInternetShortcut(input) {
   if (typeof input !== 'string') {
     throw new TypeError('Expected internet shortcut contents to be a string');
@@ -19,7 +28,7 @@ function parseInternetShortcut(input) {
     if (sectionMatch) {
       currentSection = sectionMatch[1];
       if (!Object.hasOwn(result, currentSection)) {
-        result[currentSection] = {};
+        defineSafeProperty(result, currentSection, {});
       }
       continue;
     }
@@ -33,11 +42,11 @@ function parseInternetShortcut(input) {
     const value = line.slice(separatorIndex + 1).trim();
 
     if (currentSection) {
-      result[currentSection][key] = value;
+      defineSafeProperty(result[currentSection], key, value);
       continue;
     }
 
-    result[key] = value;
+    defineSafeProperty(result, key, value);
   }
 
   return result;
