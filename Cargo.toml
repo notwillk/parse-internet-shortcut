@@ -1,0 +1,12 @@
+[package]
+name = "parse-internet-shortcut"
+version = "0.1.0"
+edition = "2024"
+description = "Parse Windows .url internet shortcut files."
+license = "MIT"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[dev-dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }

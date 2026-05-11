@@ -1,19 +1,18 @@
 # parse-internet-shortcut
 
-Parse Windows `.url` internet shortcut files into plain JavaScript objects.
+Parse Windows `.url` internet shortcut files into a nested map of sections and key/value pairs.
 
 ## Usage
 
-```js
-const { parseInternetShortcut } = require('parse-internet-shortcut');
+```rust
+use parse_internet_shortcut::parse;
 
-const parsed = parseInternetShortcut(`
-[InternetShortcut]
-URL=https://example.com/
-IconIndex=0
-`);
+let map = parse(
+    "[InternetShortcut]\nURL=https://example.com/\nIconIndex=0\n"
+);
+assert_eq!(map["InternetShortcut"]["URL"], "https://example.com/");
 ```
 
 ## Tests
 
-Fixture-based integration coverage lives in `/fixtures`. Each `.url` file has a matching `.json` snapshot, and `npm test` validates every pair automatically.
+Fixture-based integration coverage lives in `fixtures/`. Each `.url` file has a matching `.json` snapshot. Run `cargo test` to validate every pair automatically.
