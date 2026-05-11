@@ -55,3 +55,13 @@ fn returns_usage_error_for_unknown_flag() {
     assert!(stderr.starts_with("error: "));
     assert!(stderr.contains("unexpected argument '--unknown' found"));
 }
+
+#[test]
+fn help_shows_required_path_without_error_prefix() {
+    let mut cmd = Command::cargo_bin("parse-internet-shortcut").expect("binary exists");
+    let assert = cmd.arg("--help").assert().success();
+
+    let stdout = String::from_utf8_lossy(&assert.get_output().stdout);
+    assert!(stdout.contains("Usage: parse-internet-shortcut <PATH>"));
+    assert!(!stdout.starts_with("error:"));
+}

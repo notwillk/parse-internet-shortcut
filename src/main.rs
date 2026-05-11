@@ -61,7 +61,19 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), AppError> {
-    let args = Args::try_parse().map_err(map_clap_error)?;
+    let args = match Args::try_parse() {
+        Ok(args) => args,
+        Err(error)
+            if matches!(
+                error.kind(),
+                ErrorKind::DisplayHelp | ErrorKind::DisplayVersion
+            ) =>
+        {
+            print!("{error}");
+            return Ok(());
+        }
+        Err(error) => return Err(map_clap_error(error)),
+    };
     let input = args.path;
 
     let content = if input == "-" {
