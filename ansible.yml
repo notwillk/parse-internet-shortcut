@@ -31,6 +31,36 @@
         - action:ci
         - action:release
 
+    - name: Ensure apt keyrings directory exists for GitHub CLI repo key
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+      become: true
+      tags:
+        - dev-tool
+        - action:release
+
+    - name: Install GitHub CLI apt repository key
+      ansible.builtin.get_url:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        dest: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+        mode: "0644"
+      become: true
+      tags:
+        - dev-tool
+        - action:release
+
+    - name: Configure GitHub CLI apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+        filename: github-cli
+        state: present
+      become: true
+      tags:
+        - dev-tool
+        - action:release
+
     - name: Install GitHub CLI
       ansible.builtin.apt:
         name: gh
