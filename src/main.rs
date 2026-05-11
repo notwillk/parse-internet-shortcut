@@ -63,16 +63,16 @@ fn main() -> ExitCode {
 fn run() -> Result<(), AppError> {
     let args = match Args::try_parse() {
         Ok(args) => args,
-        Err(error)
+        Err(error) => {
             if matches!(
                 error.kind(),
                 ErrorKind::DisplayHelp | ErrorKind::DisplayVersion
-            ) =>
-        {
-            print!("{error}");
-            return Ok(());
+            ) {
+                print!("{error}");
+                return Ok(());
+            }
+            return Err(map_clap_error(error));
         }
-        Err(error) => return Err(map_clap_error(error)),
     };
     let input = args.path;
 

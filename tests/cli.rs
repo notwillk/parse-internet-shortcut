@@ -62,6 +62,8 @@ fn help_shows_required_path_without_error_prefix() {
     let assert = cmd.arg("--help").assert().success();
 
     let stdout = String::from_utf8_lossy(&assert.get_output().stdout);
+    let stderr = String::from_utf8_lossy(&assert.get_output().stderr);
     assert!(stdout.contains("Usage: parse-internet-shortcut <PATH>"));
     assert!(!stdout.starts_with("error:"));
+    assert!(stderr.is_empty());
 }
