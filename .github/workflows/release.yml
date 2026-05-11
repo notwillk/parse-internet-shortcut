@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing git tag to release (for example: v0.1.0)
+        description: "Existing git tag to release (for example: v0.1.0)"
         required: true
         type: string
 
@@ -20,7 +20,6 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
       CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
-      CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
     steps:
       - name: Check out tagged revision
         uses: actions/checkout@v6.0.2
