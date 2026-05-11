@@ -1,8 +1,19 @@
 # parse-internet-shortcut
 
-`parse-internet-shortcut` is a Rust CLI that parses Internet Shortcut (`.url`) files and emits their INI-like contents as pretty JSON.
+`parse-internet-shortcut` is a Rust crate that parses Internet Shortcut (`.url`) files. It ships both a library API and a CLI that emits the parsed contents as pretty JSON.
 
-## Install
+## Library usage
+
+```rust
+use parse_internet_shortcut::parse;
+
+let map = parse(
+    "[InternetShortcut]\nURL=https://example.com/\nIconIndex=0\n"
+);
+assert_eq!(map["InternetShortcut"]["URL"], "https://example.com/");
+```
+
+## Install (CLI)
 
 Download the latest Linux release artifacts from GitHub Releases and extract the archive for your architecture:
 
@@ -11,7 +22,7 @@ Download the latest Linux release artifacts from GitHub Releases and extract the
 
 Then place `parse-internet-shortcut` on your `PATH`, for example in `/usr/local/bin`.
 
-## Usage
+## Usage (CLI)
 
 ```bash
 parse-internet-shortcut <path-to-file>
@@ -58,6 +69,10 @@ Output:
 | `3` | Parse error |
 | `4` | Serialization/output error |
 
+## Tests
+
+Fixture-based integration coverage lives in `fixtures/`. Each `.url` file has a matching `.json` snapshot. Run `cargo test` to validate all unit tests and fixture pairs automatically.
+
 ## Supported platforms
 
 Release artifacts are produced only for:
@@ -73,3 +88,4 @@ Releases are configured with GoReleaser via `.goreleaser.yml` and generate:
 - checksums (`checksums.txt`)
 - `.deb` package
 - `.rpm` package
+
