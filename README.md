@@ -48,6 +48,41 @@ sudo dpkg -i ./parse-internet-shortcut_*.deb
 sudo rpm -i ./parse-internet-shortcut-*.rpm
 ```
 
+### From package repositories (APT and DNF/YUM)
+
+When repository publishing is enabled in the release workflow, package repositories are published at:
+
+- APT: `https://notwillk.github.io/parse-internet-shortcut/apt`
+- YUM/DNF: `https://notwillk.github.io/parse-internet-shortcut/rpm`
+
+Debian/Ubuntu:
+
+```bash
+sudo install -d -m 0755 /usr/share/keyrings
+curl -fsSL https://notwillk.github.io/parse-internet-shortcut/repo-signing-key.gpg \
+  | sudo tee /usr/share/keyrings/parse-internet-shortcut-archive-keyring.gpg >/dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/parse-internet-shortcut-archive-keyring.gpg] https://notwillk.github.io/parse-internet-shortcut/apt stable main" \
+  | sudo tee /etc/apt/sources.list.d/parse-internet-shortcut.list >/dev/null
+sudo apt-get update
+sudo apt-get install -y parse-internet-shortcut
+```
+
+Fedora/RHEL/openSUSE:
+
+```bash
+sudo tee /etc/yum.repos.d/parse-internet-shortcut.repo >/dev/null <<'EOF'
+[parse-internet-shortcut]
+name=parse-internet-shortcut
+baseurl=https://notwillk.github.io/parse-internet-shortcut/rpm
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://notwillk.github.io/parse-internet-shortcut/repo-signing-key.asc
+EOF
+sudo dnf makecache
+sudo dnf install -y parse-internet-shortcut
+```
+
 Verify the installation:
 
 ```bash
@@ -136,6 +171,7 @@ To cut a release:
 1. Create and push the Git tag you want to publish, for example `v0.1.0`.
 2. Open the repository's **Actions** tab.
 3. Run the **Release** workflow and provide that tag as the `tag` input.
+4. If you want repository publishing in the same run, set `publish_repositories=true`.
 
 The workflow builds and uploads these assets to the matching GitHub Release:
 
@@ -143,3 +179,29 @@ The workflow builds and uploads these assets to the matching GitHub Release:
 - checksums (`checksums.txt`)
 - `.deb` package
 - `.rpm` package
+
+When `publish_repositories=true`, the workflow also:
+
+- creates signed APT metadata (`InRelease`, `Release.gpg`)
+- creates signed YUM/DNF metadata (`repodata/repomd.xml.asc`)
+- publishes repositories and the public signing key on GitHub Pages
+
+Required GitHub secrets for repository publishing:
+
+- `REPO_GPG_PRIVATE_KEY` (ASCII-armored private key)
+- `REPO_GPG_KEY_ID` (GPG key ID to use for signatures)
+- `REPO_GPG_PASSPHRASE` (passphrase for the signing key)
+
+## Release QA for package repositories
+
+Use the manually dispatched **Package Repository QA** workflow after repository publishing:
+
+1. Set `repository_base_url` (default: `https://notwillk.github.io/parse-internet-shortcut`)
+2. Set `expected_version` to the version you just released.
+3. Optionally set `previous_version` to validate upgrade-path behavior from an older release.
+
+The QA workflow validates:
+
+- signed metadata consumption (`apt`/`dnf` repository checks)
+- fresh installation on Ubuntu and Fedora
+- optional upgrade visibility/path checks when `previous_version` is provided

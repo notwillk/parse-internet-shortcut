@@ -1,0 +1,164 @@
+name: Package Repository QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository_base_url:
+        description: "Base URL for published package repositories"
+        required: false
+        default: "https://notwillk.github.io/parse-internet-shortcut"
+        type: string
+      expected_version:
+        description: "Expected package version (for example: 0.2.0)"
+        required: true
+        type: string
+      previous_version:
+        description: "Optional older version for upgrade-path testing (for example: 0.1.0)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu-apt-qa:
+    name: Ubuntu APT install and upgrade QA
+    runs-on: ubuntu-latest
+    env:
+      REPOSITORY_BASE_URL: ${{ inputs.repository_base_url }}
+      EXPECTED_VERSION: ${{ inputs.expected_version }}
+      PREVIOUS_VERSION: ${{ inputs.previous_version }}
+    steps:
+      - name: Install required tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ca-certificates curl
+
+      - name: Configure APT trust and repository
+        run: |
+          sudo mkdir -p /usr/share/keyrings
+          sudo curl --fail --location --silent --show-error \
+            "${REPOSITORY_BASE_URL}/repo-signing-key.gpg" \
+            --output /usr/share/keyrings/parse-internet-shortcut-archive-keyring.gpg
+
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/parse-internet-shortcut-archive-keyring.gpg] ${REPOSITORY_BASE_URL}/apt stable main" \
+            | sudo tee /etc/apt/sources.list.d/parse-internet-shortcut.list > /dev/null
+
+      - name: Verify repository metadata signatures and package availability
+        run: |
+          sudo apt-get update
+          candidate="$(apt-cache policy parse-internet-shortcut | awk '/Candidate:/ {print $2; exit}')"
+          [ "${candidate}" = "${EXPECTED_VERSION}" ]
+
+      - name: Validate fresh install path
+        run: |
+          sudo apt-get install --yes parse-internet-shortcut
+          parse-internet-shortcut --version | grep -F "${EXPECTED_VERSION}"
+
+      - name: Validate upgrade visibility from previous release
+        if: env.PREVIOUS_VERSION != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          asset_url="$(
+            python3 - <<'PY'
+            import json, os, urllib.request
+            repo = os.environ["GITHUB_REPOSITORY"]
+            tag = os.environ["PREVIOUS_VERSION"]
+            req = urllib.request.Request(
+                f"https://api.github.com/repos/{repo}/releases/tags/v{tag}",
+                headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}", "Accept": "application/vnd.github+json"},
+            )
+            with urllib.request.urlopen(req) as response:
+                data = json.load(response)
+            for asset in data.get("assets", []):
+                name = asset.get("name", "")
+                if name.endswith(".deb") and "amd64" in name:
+                    print(asset["browser_download_url"])
+                    break
+            PY
+          )"
+
+          if [ -z "${asset_url}" ]; then
+            echo "Could not locate amd64 .deb asset for v${PREVIOUS_VERSION}"
+            exit 1
+          fi
+
+          curl --fail --location --silent --show-error "${asset_url}" --output /tmp/previous.deb
+          sudo dpkg -i /tmp/previous.deb || sudo apt-get install --yes --fix-broken
+
+          dry_run_output="$(sudo apt-get --just-print upgrade)"
+          echo "${dry_run_output}" | grep -F "parse-internet-shortcut"
+
+  fedora-dnf-qa:
+    name: Fedora DNF install and upgrade QA
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:41
+    env:
+      REPOSITORY_BASE_URL: ${{ inputs.repository_base_url }}
+      EXPECTED_VERSION: ${{ inputs.expected_version }}
+      PREVIOUS_VERSION: ${{ inputs.previous_version }}
+    steps:
+      - name: Install required tooling
+        run: |
+          dnf install -y ca-certificates curl python3
+
+      - name: Configure DNF trust and repository
+        run: |
+          cat > /etc/yum.repos.d/parse-internet-shortcut.repo <<EOF
+          [parse-internet-shortcut]
+          name=parse-internet-shortcut
+          baseurl=${REPOSITORY_BASE_URL}/rpm
+          enabled=1
+          gpgcheck=1
+          repo_gpgcheck=1
+          gpgkey=${REPOSITORY_BASE_URL}/repo-signing-key.asc
+          EOF
+
+      - name: Verify repository metadata signatures and package availability
+        run: |
+          dnf clean all
+          dnf makecache
+          dnf --showduplicates list parse-internet-shortcut | grep -F "${EXPECTED_VERSION}"
+
+      - name: Validate fresh install path
+        run: |
+          dnf install -y parse-internet-shortcut
+          parse-internet-shortcut --version | grep -F "${EXPECTED_VERSION}"
+
+      - name: Validate upgrade visibility from previous release
+        if: env.PREVIOUS_VERSION != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          asset_url="$(
+            python3 - <<'PY'
+            import json, os, urllib.request
+            repo = os.environ["GITHUB_REPOSITORY"]
+            tag = os.environ["PREVIOUS_VERSION"]
+            req = urllib.request.Request(
+                f"https://api.github.com/repos/{repo}/releases/tags/v{tag}",
+                headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}", "Accept": "application/vnd.github+json"},
+            )
+            with urllib.request.urlopen(req) as response:
+                data = json.load(response)
+            for asset in data.get("assets", []):
+                name = asset.get("name", "")
+                if name.endswith(".rpm") and ("x86_64" in name or "amd64" in name):
+                    print(asset["browser_download_url"])
+                    break
+            PY
+          )"
+
+          if [ -z "${asset_url}" ]; then
+            echo "Could not locate x86_64 .rpm asset for v${PREVIOUS_VERSION}"
+            exit 1
+          fi
+
+          curl --fail --location --silent --show-error "${asset_url}" --output /tmp/previous.rpm
+          rpm -Uvh --oldpackage /tmp/previous.rpm
+          dnf -y upgrade --refresh
+          parse-internet-shortcut --version | grep -F "${EXPECTED_VERSION}"

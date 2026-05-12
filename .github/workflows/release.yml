@@ -176,7 +176,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: /home/runner/work/parse-internet-shortcut/parse-internet-shortcut/published-repositories
+          path: ${{ github.workspace }}/published-repositories
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
