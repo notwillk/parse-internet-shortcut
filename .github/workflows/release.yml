@@ -175,6 +175,26 @@ jobs:
           gpg --batch --yes --export "${GPG_KEY_ID}" > "${repo_root}/repo-signing-key.gpg"
           gpg --batch --yes --armor --export "${GPG_KEY_ID}" > "${repo_root}/repo-signing-key.asc"
 
+          cat > "${repo_root}/index.html" <<'EOF'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>parse-internet-shortcut package repositories</title>
+          </head>
+          <body>
+            <h1>parse-internet-shortcut package repositories</h1>
+            <ul>
+              <li><a href="./apt/">APT repository</a></li>
+              <li><a href="./rpm/">YUM/DNF repository</a></li>
+              <li><a href="./repo-signing-key.gpg">Repository signing key (GPG binary)</a></li>
+              <li><a href="./repo-signing-key.asc">Repository signing key (ASCII armored)</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
