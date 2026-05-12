@@ -24,10 +24,8 @@ Download and extract the latest archive for your Linux architecture:
 x86_64:
 
 ```bash
-curl -fsSL https://api.github.com/repos/notwillk/parse-internet-shortcut/releases/latest \
-  | grep "browser_download_url.*linux_x86_64.tar.gz" \
-  | cut -d '"' -f 4 \
-  | xargs curl -fsSL -O
+curl -fsSL "$(curl -fsSL https://api.github.com/repos/notwillk/parse-internet-shortcut/releases/latest \
+  | jq -r '.assets[] | select(.name | test("linux_x86_64\\.tar\\.gz$")) | .browser_download_url')" -O
 tar -xzf parse-internet-shortcut_*_linux_x86_64.tar.gz
 sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
 ```
@@ -35,10 +33,8 @@ sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-short
 arm64:
 
 ```bash
-curl -fsSL https://api.github.com/repos/notwillk/parse-internet-shortcut/releases/latest \
-  | grep "browser_download_url.*linux_arm64.tar.gz" \
-  | cut -d '"' -f 4 \
-  | xargs curl -fsSL -O
+curl -fsSL "$(curl -fsSL https://api.github.com/repos/notwillk/parse-internet-shortcut/releases/latest \
+  | jq -r '.assets[] | select(.name | test("linux_arm64\\.tar\\.gz$")) | .browser_download_url')" -O
 tar -xzf parse-internet-shortcut_*_linux_arm64.tar.gz
 sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
 ```
