@@ -62,12 +62,13 @@ jobs:
         run: |
           set -euo pipefail
           asset_url="$(
-            python3 -c 'import json, os, urllib.request
+            python3 - <<'PY'
+            import json, os, urllib.request
             repo = os.environ["GITHUB_REPOSITORY"]
             tag = os.environ["PREVIOUS_VERSION"]
             req = urllib.request.Request(
                 f"https://api.github.com/repos/{repo}/releases/tags/v{tag}",
-                headers={"Authorization": f"Bearer {os.environ[\"GITHUB_TOKEN\"]}", "Accept": "application/vnd.github+json"},
+                headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}", "Accept": "application/vnd.github+json"},
             )
             with urllib.request.urlopen(req) as response:
                 data = json.load(response)
@@ -75,7 +76,8 @@ jobs:
                 name = asset.get("name", "")
                 if name.endswith(".deb") and "amd64" in name:
                     print(asset["browser_download_url"])
-                    break'
+                    break
+            PY
           )"
 
           if [ -z "${asset_url}" ]; then
@@ -133,12 +135,13 @@ jobs:
         run: |
           set -euo pipefail
           asset_url="$(
-            python3 -c 'import json, os, urllib.request
+            python3 - <<'PY'
+            import json, os, urllib.request
             repo = os.environ["GITHUB_REPOSITORY"]
             tag = os.environ["PREVIOUS_VERSION"]
             req = urllib.request.Request(
                 f"https://api.github.com/repos/{repo}/releases/tags/v{tag}",
-                headers={"Authorization": f"Bearer {os.environ[\"GITHUB_TOKEN\"]}", "Accept": "application/vnd.github+json"},
+                headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}", "Accept": "application/vnd.github+json"},
             )
             with urllib.request.urlopen(req) as response:
                 data = json.load(response)
@@ -146,7 +149,8 @@ jobs:
                 name = asset.get("name", "")
                 if name.endswith(".rpm") and ("x86_64" in name or "amd64" in name):
                     print(asset["browser_download_url"])
-                    break'
+                    break
+            PY
           )"
 
           if [ -z "${asset_url}" ]; then
