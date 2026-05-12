@@ -184,6 +184,7 @@ When `publish_repositories=true`, the workflow also:
 
 - creates signed APT metadata (`InRelease`, `Release.gpg`)
 - creates signed YUM/DNF metadata (`repodata/repomd.xml.asc`)
+- publishes detached package signatures for `.deb` and `.rpm` artifacts (`*.asc`)
 - publishes repositories and the public signing key on GitHub Pages
 
 Required GitHub secrets for repository publishing:

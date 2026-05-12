@@ -140,8 +140,8 @@ jobs:
           pushd "${repo_root}/apt"
           dpkg-scanpackages --arch amd64 pool /dev/null > dists/stable/main/binary-amd64/Packages
           dpkg-scanpackages --arch arm64 pool /dev/null > dists/stable/main/binary-arm64/Packages
-          gzip -9f dists/stable/main/binary-amd64/Packages
-          gzip -9f dists/stable/main/binary-arm64/Packages
+          gzip -9kf dists/stable/main/binary-amd64/Packages
+          gzip -9kf dists/stable/main/binary-arm64/Packages
 
           cat > apt-release.conf <<'EOF'
           APT::FTPArchive::Release {
