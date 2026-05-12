@@ -105,6 +105,21 @@ Output:
 
 Fixture-based integration coverage lives in `fixtures/`. Each `.url` file has a matching `.json` snapshot. Run `cargo test` to validate all unit tests and fixture pairs automatically.
 
+## Local build (for testing)
+
+Use the same Rust toolchain as CI/release (`1.85.x`), then build and test locally:
+
+```bash
+cargo build
+cargo test
+```
+
+Run the local binary directly from the build output:
+
+```bash
+./target/debug/parse-internet-shortcut --help
+```
+
 ## Supported platforms
 
 Release artifacts are produced only for:
