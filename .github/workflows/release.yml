@@ -9,6 +9,11 @@ on:
         description: "Existing git tag to release (for example: v0.1.0)"
         required: true
         type: string
+      publish_repositories:
+        description: "Publish APT and YUM/DNF repositories to GitHub Pages"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -59,3 +64,119 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stage packages for repository publishing
+        if: inputs.publish_repositories
+        run: |
+          mkdir -p repository-packages
+          cp dist/*.deb repository-packages/
+          cp dist/*.rpm repository-packages/
+
+      - name: Upload packages for repository publishing
+        if: inputs.publish_repositories
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-packages
+          path: repository-packages
+          if-no-files-found: error
+
+  publish-package-repositories:
+    name: Publish APT and YUM/DNF repositories
+    if: inputs.publish_repositories
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          name: repository-packages
+          path: /tmp/repository-packages
+
+      - name: Install repository tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes dpkg-dev apt-utils createrepo-c gnupg rpm
+
+      - name: Import signing key
+        env:
+          REPO_GPG_PRIVATE_KEY: ${{ secrets.REPO_GPG_PRIVATE_KEY }}
+        run: |
+          if [ -z "${REPO_GPG_PRIVATE_KEY}" ]; then
+            echo "REPO_GPG_PRIVATE_KEY secret is required when publish_repositories=true"
+            exit 1
+          fi
+
+          export GNUPGHOME="${RUNNER_TEMP}/gnupg"
+          mkdir -p "${GNUPGHOME}"
+          chmod 700 "${GNUPGHOME}"
+          printf '%s' "${REPO_GPG_PRIVATE_KEY}" | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+          echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
+
+      - name: Build and sign repository metadata
+        env:
+          GPG_KEY_ID: ${{ secrets.REPO_GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.REPO_GPG_PASSPHRASE }}
+        run: |
+          if [ -z "${GPG_KEY_ID}" ]; then
+            echo "REPO_GPG_KEY_ID secret is required when publish_repositories=true"
+            exit 1
+          fi
+
+          repo_root="${GITHUB_WORKSPACE}/published-repositories"
+          apt_pool="${repo_root}/apt/pool/main/p/parse-internet-shortcut"
+          apt_dist="${repo_root}/apt/dists/stable/main"
+          rpm_root="${repo_root}/rpm"
+
+          mkdir -p "${apt_pool}" "${apt_dist}/binary-amd64" "${apt_dist}/binary-arm64" "${rpm_root}"
+
+          cp /tmp/repository-packages/*.deb "${apt_pool}/"
+          cp /tmp/repository-packages/*.rpm "${rpm_root}/"
+
+          pushd "${repo_root}/apt"
+          dpkg-scanpackages --arch amd64 pool /dev/null > dists/stable/main/binary-amd64/Packages
+          dpkg-scanpackages --arch arm64 pool /dev/null > dists/stable/main/binary-arm64/Packages
+          gzip -9f dists/stable/main/binary-amd64/Packages
+          gzip -9f dists/stable/main/binary-arm64/Packages
+
+          cat > apt-release.conf <<'EOF'
+          APT::FTPArchive::Release {
+            Origin "notwillk";
+            Label "parse-internet-shortcut";
+            Suite "stable";
+            Codename "stable";
+            Architectures "amd64 arm64";
+            Components "main";
+            Description "parse-internet-shortcut APT repository";
+          };
+          EOF
+
+          apt-ftparchive -c apt-release.conf release dists/stable > dists/stable/Release
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --local-user "${GPG_KEY_ID}" --clearsign --output dists/stable/InRelease dists/stable/Release
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --local-user "${GPG_KEY_ID}" --armor --detach-sign --output dists/stable/Release.gpg dists/stable/Release
+          popd
+
+          createrepo_c "${rpm_root}"
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --local-user "${GPG_KEY_ID}" --armor --detach-sign --output "${rpm_root}/repodata/repomd.xml.asc" "${rpm_root}/repodata/repomd.xml"
+
+          for pkg in "${apt_pool}"/*.deb "${rpm_root}"/*.rpm; do
+            gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --local-user "${GPG_KEY_ID}" --armor --detach-sign "${pkg}"
+          done
+
+          gpg --batch --yes --export "${GPG_KEY_ID}" > "${repo_root}/repo-signing-key.gpg"
+          gpg --batch --yes --armor --export "${GPG_KEY_ID}" > "${repo_root}/repo-signing-key.asc"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: /home/runner/work/parse-internet-shortcut/parse-internet-shortcut/published-repositories
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
