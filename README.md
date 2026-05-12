@@ -19,24 +19,18 @@ This CLI is distributed through [GitHub Releases](https://github.com/notwillk/pa
 
 ### From a release archive
 
-Download and extract the latest archive for your Linux architecture:
+Download the matching archive from the [latest release](https://github.com/notwillk/parse-internet-shortcut/releases/latest), then run:
 
 x86_64:
 
 ```bash
-curl -fsSL "$(curl -fsSL https://api.github.com/repos/notwillk/parse-internet-shortcut/releases/latest \
-  | jq -r '.assets[] | select(.name | test("linux_x86_64\\.tar\\.gz$")) | .browser_download_url')" -O
-tar -xzf parse-internet-shortcut_*_linux_x86_64.tar.gz
-sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
+tar -xzf parse-internet-shortcut_*_linux_x86_64.tar.gz && sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
 ```
 
 arm64:
 
 ```bash
-curl -fsSL "$(curl -fsSL https://api.github.com/repos/notwillk/parse-internet-shortcut/releases/latest \
-  | jq -r '.assets[] | select(.name | test("linux_arm64\\.tar\\.gz$")) | .browser_download_url')" -O
-tar -xzf parse-internet-shortcut_*_linux_arm64.tar.gz
-sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
+tar -xzf parse-internet-shortcut_*_linux_arm64.tar.gz && sudo install -m 0755 parse-internet-shortcut /usr/local/bin/parse-internet-shortcut
 ```
 
 ### From a package
