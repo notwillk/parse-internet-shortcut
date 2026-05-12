@@ -67,7 +67,7 @@ sudo apt-get update
 sudo apt-get install -y parse-internet-shortcut
 ```
 
-Fedora/RHEL/openSUSE:
+Fedora/RHEL (DNF/YUM):
 
 ```bash
 sudo tee /etc/yum.repos.d/parse-internet-shortcut.repo >/dev/null <<'EOF'
