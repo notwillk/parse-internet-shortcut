@@ -19,7 +19,7 @@ This CLI is distributed through [GitHub Releases](https://github.com/notwillk/pa
 
 ### From a release archive
 
-Download the matching archive from the [latest release](https://github.com/notwillk/parse-internet-shortcut/releases/latest), then run:
+Download the matching archive from the [latest release](https://github.com/notwillk/parse-internet-shortcut/releases/latest), then run these commands from a directory containing only the archive you want to install:
 
 x86_64:
 
