@@ -127,6 +127,11 @@ jobs:
             exit 1
           fi
 
+          if [ -z "${GPG_PASSPHRASE}" ]; then
+            echo "REPO_GPG_PASSPHRASE secret is required when publish_repositories=true"
+            exit 1
+          fi
+
           repo_root="${GITHUB_WORKSPACE}/published-repositories"
           apt_pool="${repo_root}/apt/pool/main/p/parse-internet-shortcut"
           apt_dist="${repo_root}/apt/dists/stable/main"
