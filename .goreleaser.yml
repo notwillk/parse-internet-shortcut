@@ -26,6 +26,7 @@ checksum:
 nfpms:
   - id: packages
     package_name: parse-internet-shortcut
+    maintainer: William Klancnik <william@klancnik.com>
     description: Parse Internet Shortcut .url files and emit JSON.
     license: MIT
     formats:

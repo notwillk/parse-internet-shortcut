@@ -37,6 +37,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes gcc-aarch64-linux-gnu
+          pip3 install ziglang
+          cargo install cargo-zigbuild
 
       - name: Set up GoReleaser
         uses: goreleaser/goreleaser-action@v7.2.1
